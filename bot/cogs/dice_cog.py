@@ -85,7 +85,7 @@ class DiceCog(commands.Cog):
         verdict = coc.LEVEL_NAMES[level]
         if level >= coc.Level.REGULAR and not ok:
             verdict += f" · {난이도} 난이도 미달"
-        colour = style.LEVEL_COLOUR[level] if (ok or level <= coc.Level.FAIL) else style.ASH
+        colour = style.LEVEL_COLOUR[level] if (ok or level <= coc.Level.FAIL) else style.HAZE
 
         use_char = char is not None and 수치 is None
         who = char["name"] if use_char else interaction.user.display_name

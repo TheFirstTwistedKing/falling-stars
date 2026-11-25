@@ -98,7 +98,7 @@ class StoryCog(commands.Cog):
         if not await self._gm_only(interaction):
             return
         e = style.embed(title=제목, description=(설명 or "").replace("\\n", "\n")[:4000] or None,
-                        colour=style.EMBER)
+                        colour=style.LEMON)
         e.set_author(name="장면 전환")
         if 이미지 and 이미지.startswith(("http://", "https://")):
             e.set_image(url=이미지)
