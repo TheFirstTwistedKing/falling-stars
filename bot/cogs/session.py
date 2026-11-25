@@ -27,7 +27,7 @@ def initiative_embed(state: dict) -> discord.Embed:
         lines.append(f"{marker} `{entry['value']:>3}` {entry['name']}")
     title = f"전투 · {state.get('round', 1)}라운드" if state.get("started") else "전투 준비"
     e = style.embed(title=title, description="\n".join(lines) or "참가자가 없습니다.",
-                    colour=style.CINDER if state.get("started") else style.NIGHT)
+                    colour=style.DEEP if state.get("started") else style.SKY)
     if state.get("started") and order:
         e.set_footer(text=f"지금 차례: {order[idx]['name']}")
     return e
@@ -72,7 +72,7 @@ class SessionCog(commands.Cog):
                                               interaction.user.id)
         self.active[interaction.channel_id] = sid
         await self.bot.db.log(sid, "system", "GM", f"세션 시작: {이름}")
-        e = style.embed(title=이름, description="세션이 시작되었습니다.", colour=style.EMBER)
+        e = style.embed(title=이름, description="세션이 시작되었습니다.", colour=style.LEMON)
         e.add_field(name="GM", value=interaction.user.mention)
         e.add_field(name="채팅 기록", value="켜짐" if config.LOG_CHAT else "명령어 결과만", inline=True)
         await interaction.response.send_message(embed=e)

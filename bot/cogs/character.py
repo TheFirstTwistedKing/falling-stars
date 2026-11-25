@@ -197,7 +197,7 @@ class CharacterCog(commands.GroupCog, group_name="캐릭터", group_description=
         r["cur"] = max(0, min(int(r["cur"]), int(r["max"]) if int(r["max"]) > 0 else int(r["cur"])))
         resources[항목] = r
         await self.bot.db.update_character(char["id"], resources=resources)
-        colour = style.CINDER if r["cur"] < before else style.EMBER if r["cur"] > before else style.NIGHT
+        colour = style.DEEP if r["cur"] < before else style.LEMON if r["cur"] > before else style.SKY
         e = style.embed(title=f"{항목} {before} → {r['cur']}", colour=colour,
                         description=f"`{style.bar(int(r['cur']), int(r['max']))}` {r['cur']}/{r['max']}")
         e.set_author(name=char["name"])
