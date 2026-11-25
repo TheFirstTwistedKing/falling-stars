@@ -55,12 +55,42 @@ def test_full_flow(tmp_path, monkeypatch):
         for ext in EXTENSIONS:
             await bot.load_extension(ext)
         monkeypatch.setattr(bot.extensions["bot.cogs.story"], "TYPE_INTERVAL", 0)
+        admins = {99}
+        monkeypatch.setattr(bot.extensions["bot.cogs.character"], "is_admin",
+                            lambda inter: inter.user.id in admins)
         ch, dice, sess, lore_cog, st = (bot.get_cog(n) for n in
                                         ("CharacterCog", "DiceCog", "SessionCog", "LoreCog", "StoryCog"))
 
-        i = make_inter(bot); await ch.create.callback(ch, i, "탐사자", "랜덤")
+        player = make_inter(bot).user
+
+        # 플레이어는 캐릭터를 만들거나 고칠 수 없다
+        i = make_inter(bot); await ch.create.callback(ch, i, player, "몰래", "랜덤")
+        assert i.sent[0].ephemeral and "관리자" in i.sent[0].embed.description
+        assert await bot.db.list_characters(1) == []
+
+        # 관리자가 플레이어(2)에게 캐릭터를 만들어 준다 → 플레이어의 선택 캐릭터가 된다
+        i = make_inter(bot, user_id=99); await ch.create.callback(ch, i, player, "탐사자", "랜덤")
         assert "탐사자" == i.sent[0].embed.title
-        i = make_inter(bot); await ch.set_skill.callback(ch, i, "관찰", 70)
+        assert (await bot.db.get_active(1, 2))["name"] == "탐사자"
+        assert await bot.db.get_active(1, 99) is None
+
+        i = make_inter(bot, user_id=99); await ch.set_skill.callback(ch, i, player, "탐사자", "관찰", 70)
+        before = await bot.db.get_active(1, 2)
+        for call in (lambda i: ch.set_stat.callback(ch, i, player, "탐사자", "근력", 99),
+                     lambda i: ch.set_skill.callback(ch, i, player, "탐사자", "관찰", 99),
+                     lambda i: ch.decorate.callback(ch, i, player, "탐사자", None, "x"),
+                     lambda i: ch.delete.callback(ch, i, player, "탐사자", "탐사자")):
+            i = make_inter(bot); await call(i)
+            assert i.sent[0].ephemeral and "관리자" in i.sent[0].embed.description
+        assert await bot.db.get_active(1, 2) == before
+
+        # 관리자 대상 지정이 틀리면 거부
+        i = make_inter(bot, user_id=99); await ch.set_stat.callback(ch, i, player, "없는이름", "근력", 50)
+        assert "없습니다" in i.sent[0].embed.description
+
+        # 플레이어는 배정된 캐릭터를 선택할 수 있다
+        i = make_inter(bot); await ch.select.callback(ch, i, "탐사자")
+        assert "선택했습니다" in i.sent[0].embed.description
         i = make_inter(bot); await dice.check.callback(dice, i, "관찰", None, 0, 0, "보통", False)
         assert i.sent[0].embed.author.name.startswith("탐사자 · 관찰 70")
 
@@ -103,6 +133,8 @@ def test_full_flow(tmp_path, monkeypatch):
 
         i = make_inter(bot); await ch.view.callback(ch, i, None, None)
         assert i.sent[0].embed.fields
+        i = make_inter(bot, user_id=99); await ch.delete.callback(ch, i, player, "탐사자", "탐사자")
+        assert await bot.db.list_characters(1) == []
         i = make_inter(bot); await sess.end.callback(sess, i)
         data = i.sent[0].file.fp.read().decode()
         for word in ("세션 시작", "2d6+1", "이성판정", "[서막]", "장면1", "전투 시작", "체력", "세션 종료"):

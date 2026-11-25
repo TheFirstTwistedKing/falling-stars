@@ -8,6 +8,14 @@ from . import config
 WEBHOOK_NAME = "TRPG Narrator"
 
 
+def is_admin(interaction: discord.Interaction) -> bool:
+    """관리자 판정: 서버 관리 권한 또는 GM 역할. (세션 GM이라는 것만으로는 아님)"""
+    member = interaction.user
+    if not isinstance(member, discord.Member):
+        return False
+    return member.guild_permissions.manage_guild or any(r.name == config.GM_ROLE_NAME for r in member.roles)
+
+
 async def is_gm(interaction: discord.Interaction) -> bool:
     """GM 판정: 서버 관리 권한, GM 역할, 또는 이 채널 진행 중 세션의 GM."""
     member = interaction.user

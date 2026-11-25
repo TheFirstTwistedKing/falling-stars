@@ -82,3 +82,24 @@ def test_command_tree_builds(tmp_path, monkeypatch):
             assert len(opt["description"]) <= 100
             for sub in opt.get("options", []) or []:
                 assert len(sub["description"]) <= 100
+
+
+def test_is_admin_rules():
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    import discord
+
+    from bot import config
+    from bot.helpers import is_admin
+
+    def member(manage=False, roles=()):
+        m = MagicMock(spec=discord.Member)
+        m.guild_permissions = SimpleNamespace(manage_guild=manage)
+        m.roles = [SimpleNamespace(name=r) for r in roles]
+        return SimpleNamespace(user=m)
+
+    assert is_admin(member(manage=True))
+    assert is_admin(member(roles=[config.GM_ROLE_NAME]))
+    assert not is_admin(member(roles=["플레이어"]))
+    assert not is_admin(SimpleNamespace(user=SimpleNamespace(id=1)))  # DM 등 Member가 아닌 경우
